@@ -47,10 +47,9 @@ Then stop the profiling and print out the results:
   4.31      0.16      0.06  pystone.py:53:copy
     ...
 
-All of the numerical data with the exception of the calls column is
-statistically approximate. In the following column descriptions, and
-in all of statprof, "time" refers to execution time (both user and
-system), not wall clock time.
+All of the numerical data is statistically approximate. In the
+following column descriptions, and in all of statprof, "time" refers
+to execution time (both user and system), not wall clock time.
 
 % time
     The percent of the time spent inside the procedure itself (not
@@ -100,26 +99,6 @@ statprof only profiles the main thread. However because the time
 reporting function uses per-process timers, the results can be
 significantly off if other threads' work patterns are not similar to the
 main thread's work patterns.
-
-
-Implementation notes
---------------------
-
-The profiler works by setting the unix profiling signal ITIMER_PROF to
-go off after the interval you define in the call to reset(). When the
-signal fires, a sampling routine is run which looks at the current
-procedure that's executing, and then crawls up the stack, and for each
-frame encountered, increments that frame's code object's sample count.
-Note that if a procedure is encountered multiple times on a given stack,
-it is only counted once. After the sampling is complete, the profiler
-resets profiling timer to fire again after the appropriate interval.
-
-Meanwhile, the profiler keeps track, via os.times(), how much CPU time
-(system and user -- which is also what ITIMER_PROF tracks), has elapsed
-while code has been executing within a start()/stop() block.
-
-The profiler also tries to avoid counting or timing its own code as
-much as possible.
 """
 
 
@@ -260,6 +239,7 @@ def is_active():
     return state.profile_level > 0
 
 def start():
+    '''Install the profiling signal handler, and start profiling.'''
     state.profile_level += 1
     if state.profile_level == 1:
         state.last_start_time = clock()
@@ -271,6 +251,7 @@ def start():
         state.gc_time_taken = 0 # dunno
 
 def stop():
+    '''Stop profiling, and uninstall the profiling signal handler.'''
     state.profile_level -= 1
     if state.profile_level == 0:
         state.accumulate_time(clock())
@@ -281,6 +262,11 @@ def stop():
         state.gc_time_taken = 0 # dunno
 
 def reset(frequency=None):
+    '''Clear out the state of the profiler.  Do not call while the
+    profiler is running.
+
+    The optional frequency argument specifies the number of samples to
+    collect per second.'''
     assert state.profile_level == 0, "Can't reset() while statprof is running"
     CallData.all_calls.clear()
     CodeKey.cache.clear()
@@ -315,6 +301,8 @@ class CallStats(object):
 
 
 def display(fp=None):
+    '''Print statistics, either to stdout or the given file object.'''
+
     if fp is None:
         fp = sys.stdout
     if state.sample_count == 0:
