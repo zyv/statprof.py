@@ -20,6 +20,6 @@ setup(
     classifiers = [
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
-        "License :: OSI Approved :: LGPL License",
+        "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     ],
 )
