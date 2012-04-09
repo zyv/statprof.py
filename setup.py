@@ -8,7 +8,7 @@ def read(fname):
 
 setup(
     name = "statprof",
-    version = "0.1",
+    version = "0.1.1",
     author = "Bryan O'Sullivan",
     author_email = "bos@serpentine.com",
     description = ("Statistical profiling for Python"),
