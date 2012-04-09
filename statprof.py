@@ -1,4 +1,5 @@
 ## statprof.py
+## Copyright (C) 2012 Bryan O'Sullivan <bos@serpentine.com>
 ## Copyright (C) 2011 Alex Fraser <alex at phatcore dot com>
 ## Copyright (C) 2004,2005 Andy Wingo <wingo at pobox dot com>
 ## Copyright (C) 2001 Rob Browning <rlb at defaultvalue dot org>
@@ -123,8 +124,8 @@ much as possible.
 
 from __future__ import division
 
-import signal
 import os
+import signal
 
 
 __all__ = ['start', 'stop', 'reset', 'display']
@@ -174,20 +175,56 @@ class ProfileState(object):
 
 state = ProfileState()
 
-## call_data := { code object: CallData }
-call_data = {}
-class CallData(object):
-    def __init__(self, code):
-        self.name = code.co_name
+class CodeKey(object):
+    cache = {}
+
+    __slots__ = ('filename', 'lineno', 'name')
+
+    def __init__(self, frame):
+        code = frame.f_code
         self.filename = code.co_filename
-        self.lineno = code.co_firstlineno
+        self.lineno = frame.f_lineno
+        self.name = code.co_name
+
+    def __eq__(self, other):
+        try:
+            return (self.lineno == other.lineno and
+                    self.filename == other.filename)
+        except:
+            return False
+
+    def __hash__(self):
+        return hash((self.lineno, self.filename))
+
+    @classmethod
+    def get(cls, frame):
+        k = (frame.f_code.co_filename, frame.f_lineno)
+        try:
+            return cls.cache[k]
+        except KeyError:
+            v = cls(frame)
+            cls.cache[k] = v
+            return v
+
+class CallData(object):
+    all_calls = {}
+
+    __slots__ = ('key', 'call_count', 'cum_sample_count', 'self_sample_count')
+
+    def __init__(self, key):
+        self.key = key
         self.call_count = 0
         self.cum_sample_count = 0
         self.self_sample_count = 0
-        call_data[code] = self
 
-def get_call_data(code):
-    return call_data.get(code, None) or CallData(code)
+    @classmethod
+    def get(cls, key):
+        try:
+            return cls.all_calls[key]
+        except KeyError:
+            v = CallData(key)
+            cls.all_calls[key] = v
+            return v
 
 
 ###########################################################################
@@ -195,14 +232,16 @@ def get_call_data(code):
 
 def sample_stack_procs(frame):
     state.sample_count += 1
-    get_call_data(frame.f_code).self_sample_count += 1
+    key = CodeKey.get(frame)
+    CallData.get(key).self_sample_count += 1
 
-    code_seen = {}
+    keys_seen = set()
     while frame:
-        code_seen[frame.f_code] = True
+        key = CodeKey.get(frame)
+        keys_seen.add(key)
         frame = frame.f_back
-    for code in code_seen.keys():
-        get_call_data(code).cum_sample_count += 1
+    for key in keys_seen:
+        CallData.get(key).cum_sample_count += 1
 
 def profile_signal_handler(signum, frame):
     if state.profile_level > 0:
@@ -242,7 +281,8 @@ def stop():
 
 def reset(frequency=None):
     assert state.profile_level == 0, "Can't reset() while statprof is running"
-    call_data.clear()
+    CallData.all_calls.clear()
+    CodeKey.cache.clear()
     state.reset(frequency)
 
 
@@ -255,9 +295,10 @@ class CallStats(object):
         cum_samples = call_data.cum_sample_count
         nsamples = state.sample_count
         secs_per_sample = state.accumulated_time / nsamples
-        basename = os.path.basename(call_data.filename)
+        basename = os.path.basename(call_data.key.filename)
 
-        self.name = '%s:%d:%s' % (basename, call_data.lineno, call_data.name)
+        self.name = '%s:%d:%s' % (basename, call_data.key.lineno,
+                                  call_data.key.name)
         self.pcnt_time_in_proc = self_samples / nsamples * 100
         self.cum_secs_in_proc = cum_samples * secs_per_sample
         self.self_secs_in_proc = self_samples * secs_per_sample
@@ -279,7 +320,7 @@ def display(fp=None):
         print >> fp, ('No samples recorded.')
         return
 
-    l = [CallStats(x) for x in call_data.values()]
+    l = [CallStats(x) for x in CallData.all_calls.itervalues()]
     l.sort(reverse=True, key=lambda x: x.self_secs_in_proc)
     l = [(x.self_secs_in_proc, x.cum_secs_in_proc, x) for x in l]
     l = [x[2] for x in l]
