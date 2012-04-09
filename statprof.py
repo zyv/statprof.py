@@ -36,8 +36,8 @@ Then run whatever it is that you want to profile, for example:
 Then stop the profiling and print out the results:
 >>> stop()
 >>> display()
-  %   cumulative      self          
- time    seconds   seconds  name    
+  %   cumulative      self
+ time    seconds   seconds  name
  26.72      1.40      0.37  pystone.py:79:Proc0
  13.79      0.56      0.19  pystone.py:133:Proc1
  13.79      0.19      0.19  pystone.py:208:Proc8
@@ -229,7 +229,7 @@ def start():
         signal.setitimer(signal.ITIMER_PROF,
             rpt or state.sample_interval, 0.0)
         state.gc_time_taken = 0 # dunno
-  
+
 def stop():
     state.profile_level -= 1
     if state.profile_level == 0:
@@ -239,12 +239,12 @@ def stop():
         signal.signal(signal.SIGPROF, signal.SIG_IGN)
         state.remaining_prof_time = rpt[0]
         state.gc_time_taken = 0 # dunno
-    
+
 def reset(frequency=None):
     assert state.profile_level == 0, "Can't reset() while statprof is running"
     call_data.clear()
     state.reset(frequency)
-    
+
 
 ###########################################################################
 ## Reporting API
@@ -286,7 +286,7 @@ def display(fp=None):
 
     print >> fp, ('%5.5s %10.10s   %7.7s  %-8.8s' %
                   ('%  ', 'cumulative', 'self', ''))
-    print >> fp, ('%5.5s  %9.9s  %8.8s  %-8.8s' % 
+    print >> fp, ('%5.5s  %9.9s  %8.8s  %-8.8s' %
                   ("time", "seconds", "seconds", "name"))
 
     for x in l:
