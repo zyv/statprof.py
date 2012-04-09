@@ -71,8 +71,9 @@ By default statprof keeps the data collected from previous runs. If you
 want to clear the collected data, call reset():
 >>> reset()
 
-reset() can also be used to change the sampling frequency. For example,
-to tell statprof to sample 50 times a second:
+reset() can also be used to change the sampling frequency from the
+default of 1000 Hz. For example, to tell statprof to sample 50 times a
+second:
 >>> reset(50)
 
 This means that statprof will sample the call stack after every 1/50 of
@@ -157,8 +158,8 @@ class ProfileState(object):
         if frequency:
             self.sample_interval = 1.0/frequency
         elif not hasattr(self, 'sample_interval'):
-            # default to 100 Hz
-            self.sample_interval = 1.0/100.0
+            # default to 1000 Hz
+            self.sample_interval = 1.0/1000.0
         else:
             # leave the frequency as it was
             pass
