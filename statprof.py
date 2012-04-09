@@ -265,16 +265,18 @@ class CallStats(object):
         self.self_secs_per_call = None
         self.cum_secs_per_call = None
 
-    def display(self):
-        print('%6.2f %9.2f %9.2f  %s' % (self.pcnt_time_in_proc,
-                                         self.cum_secs_in_proc,
-                                         self.self_secs_in_proc,
-                                         self.name))
+    def display(self, fp):
+        print >> fp, ('%6.2f %9.2f %9.2f  %s' % (self.pcnt_time_in_proc,
+                                                 self.cum_secs_in_proc,
+                                                 self.self_secs_in_proc,
+                                                 self.name))
 
 
-def display():
+def display(fp=None):
+    if fp is None:
+        fp = sys.stdout
     if state.sample_count == 0:
-        print('No samples recorded.')
+        print >> fp, ('No samples recorded.')
         return
 
     l = [CallStats(x) for x in call_data.values()]
@@ -282,13 +284,15 @@ def display():
     l = [(x.self_secs_in_proc, x.cum_secs_in_proc, x) for x in l]
     l = [x[2] for x in l]
 
-    print('%5.5s %10.10s   %7.7s  %-8.8s' % ('%  ', 'cumulative', 'self', ''))
-    print('%5.5s  %9.9s  %8.8s  %-8.8s' % ("time", "seconds", "seconds", "name"))
+    print >> fp, ('%5.5s %10.10s   %7.7s  %-8.8s' %
+                  ('%  ', 'cumulative', 'self', ''))
+    print >> fp, ('%5.5s  %9.9s  %8.8s  %-8.8s' % 
+                  ("time", "seconds", "seconds", "name"))
 
     for x in l:
-        x.display()
+        x.display(fp)
 
-    print('---')
-    print('Sample count: %d' % state.sample_count)
-    print('Total time: %f seconds' % state.accumulated_time)
+    print >> fp, ('---')
+    print >> fp, ('Sample count: %d' % state.sample_count)
+    print >> fp, ('Total time: %f seconds' % state.accumulated_time)
 
