@@ -9,8 +9,8 @@ def read(fname):
 setup(
     name = "statprof",
     version = "0.1",
-    author = "Jeff Muizelaar",
-    author_email = "jmuizelaar@mozilla.com",
+    author = "Bryan O'Sullivan",
+    author_email = "bos@serpentine.com",
     description = ("Statistical profiling for Python"),
     license = "LGPL",
     keywords = "profiling",
