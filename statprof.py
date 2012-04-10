@@ -304,6 +304,7 @@ def display(fp=None):
     '''Print statistics, either to stdout or the given file object.'''
 
     if fp is None:
+        import sys
         fp = sys.stdout
     if state.sample_count == 0:
         print >> fp, ('No samples recorded.')
