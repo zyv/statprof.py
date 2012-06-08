@@ -32,7 +32,8 @@ To start profiling, call statprof.start():
 >>> start()
 
 Then run whatever it is that you want to profile, for example:
->>> import test.pystone; test.pystone.pystones()
+>>> import test.pystone; test.pystone.pystones() #doctest: +ELLIPSIS
+(..., ...)
 
 Then stop the profiling and print out the results:
 >>> stop()
@@ -135,10 +136,10 @@ class ProfileState(object):
         self.sample_count = 0
         # a float
         if frequency:
-            self.sample_interval = 1.0/frequency
+            self.sample_interval = 1.0 / frequency
         elif not hasattr(self, 'sample_interval'):
             # default to 1000 Hz
-            self.sample_interval = 1.0/1000.0
+            self.sample_interval = 1.0 / 1000.0
         else:
             # leave the frequency as it was
             pass
@@ -154,6 +155,7 @@ class ProfileState(object):
         self.accumulated_time += stop_time - self.last_start_time
 
 state = ProfileState()
+
 
 class CodeKey(object):
     cache = {}
@@ -185,6 +187,7 @@ class CodeKey(object):
             v = cls(frame)
             cls.cache[k] = v
             return v
+
 
 class CallData(object):
     all_calls = {}
@@ -223,6 +226,7 @@ def sample_stack_procs(frame):
     for key in keys_seen:
         CallData.get(key).cum_sample_count += 1
 
+
 def profile_signal_handler(signum, frame):
     if state.profile_level > 0:
         state.accumulate_time(clock())
@@ -238,8 +242,9 @@ def profile_signal_handler(signum, frame):
 def is_active():
     return state.profile_level > 0
 
+
 def start():
-    '''Install the profiling signal handler, and start profiling.'''
+    """Install the profiling signal handler, and start profiling."""
     state.profile_level += 1
     if state.profile_level == 1:
         state.last_start_time = clock()
@@ -248,10 +253,11 @@ def start():
         signal.signal(signal.SIGPROF, profile_signal_handler)
         signal.setitimer(signal.ITIMER_PROF,
             rpt or state.sample_interval, 0.0)
-        state.gc_time_taken = 0 # dunno
+        state.gc_time_taken = 0  # dunno
+
 
 def stop():
-    '''Stop profiling, and uninstall the profiling signal handler.'''
+    """Stop profiling, and uninstall the profiling signal handler."""
     state.profile_level -= 1
     if state.profile_level == 0:
         state.accumulate_time(clock())
@@ -259,14 +265,15 @@ def stop():
         rpt = signal.setitimer(signal.ITIMER_PROF, 0.0, 0.0)
         signal.signal(signal.SIGPROF, signal.SIG_IGN)
         state.remaining_prof_time = rpt[0]
-        state.gc_time_taken = 0 # dunno
+        state.gc_time_taken = 0  # dunno
+
 
 def reset(frequency=None):
-    '''Clear out the state of the profiler.  Do not call while the
+    """Clear out the state of the profiler.  Do not call while the
     profiler is running.
 
     The optional frequency argument specifies the number of samples to
-    collect per second.'''
+    collect per second."""
     assert state.profile_level == 0, "Can't reset() while statprof is running"
     CallData.all_calls.clear()
     CodeKey.cache.clear()
@@ -283,9 +290,11 @@ class CallStats(object):
         nsamples = state.sample_count
         secs_per_sample = state.accumulated_time / nsamples
         basename = os.path.basename(call_data.key.filename)
-
-        self.name = '%s:%d:%s' % (basename, call_data.key.lineno,
-                                  call_data.key.name)
+        self.name = "%s:%d:%s" % (
+            basename,
+            call_data.key.lineno,
+            call_data.key.name
+        )
         self.pcnt_time_in_proc = self_samples / nsamples * 100
         self.cum_secs_in_proc = cum_samples * secs_per_sample
         self.self_secs_in_proc = self_samples * secs_per_sample
@@ -294,20 +303,22 @@ class CallStats(object):
         self.cum_secs_per_call = None
 
     def display(self, fp):
-        print >> fp, ('%6.2f %9.2f %9.2f  %s' % (self.pcnt_time_in_proc,
-                                                 self.cum_secs_in_proc,
-                                                 self.self_secs_in_proc,
-                                                 self.name))
+        print >> fp, "%6.2f %9.2f %9.2f  %s" % (
+            self.pcnt_time_in_proc,
+            self.cum_secs_in_proc,
+            self.self_secs_in_proc,
+            self.name
+        )
 
 
 def display(fp=None):
-    '''Print statistics, either to stdout or the given file object.'''
+    """Print statistics, either to stdout or the given file object."""
 
     if fp is None:
         import sys
         fp = sys.stdout
     if state.sample_count == 0:
-        print >> fp, ('No samples recorded.')
+        print >> fp, "No samples recorded."
         return
 
     l = [CallStats(x) for x in CallData.all_calls.itervalues()]
@@ -315,15 +326,16 @@ def display(fp=None):
     l = [(x.self_secs_in_proc, x.cum_secs_in_proc, x) for x in l]
     l = [x[2] for x in l]
 
-    print >> fp, ('%5.5s %10.10s   %7.7s  %-8.8s' %
-                  ('%  ', 'cumulative', 'self', ''))
-    print >> fp, ('%5.5s  %9.9s  %8.8s  %-8.8s' %
-                  ("time", "seconds", "seconds", "name"))
+    print >> fp, "%5.5s %10.10s   %7.7s  %-8.8s" % (
+        '%  ', 'cumulative', 'self', ''
+    )
+    print >> fp, "%5.5s  %9.9s  %8.8s  %-8.8s" % (
+        "time", "seconds", "seconds", "name"
+    )
 
     for x in l:
         x.display(fp)
 
-    print >> fp, ('---')
-    print >> fp, ('Sample count: %d' % state.sample_count)
-    print >> fp, ('Total time: %f seconds' % state.accumulated_time)
-
+    print >> fp, "---"
+    print >> fp, "Sample count: %d" % state.sample_count
+    print >> fp, "Total time: %f seconds" % state.accumulated_time
