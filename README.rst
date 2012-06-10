@@ -34,6 +34,14 @@ It's easy to get started with ``statprof``: ::
 	    statprof.stop()
 		statprof.display()
 
+Or with a contextmanager : ::
+
+    import statprof
+    
+    with statprof.profile():
+        my_questionable_function()
+
+
 For more comprehensive help, run ``pydoc statprof``.
 
 
