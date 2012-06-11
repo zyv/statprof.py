@@ -20,7 +20,7 @@ setup(
     keywords = "profiling",
     url = "http://packages.python.org/statprof",
     py_modules = ['statprof'],
-    long_description = read('README.txt'),
+    long_description = read('README.rst'),
     classifiers = [
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
