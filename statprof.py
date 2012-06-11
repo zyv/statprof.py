@@ -100,15 +100,15 @@ reporting function uses per-process timers, the results can be
 significantly off if other threads' work patterns are not similar to the
 main thread's work patterns.
 """
-
-
 from __future__ import division
 
 import os
 import signal
 
+from contextlib import contextmanager
 
-__all__ = ['start', 'stop', 'reset', 'display']
+
+__all__ = ['start', 'stop', 'reset', 'display', 'profile']
 
 
 ###########################################################################
@@ -271,6 +271,16 @@ def reset(frequency=None):
     CallData.all_calls.clear()
     CodeKey.cache.clear()
     state.reset(frequency)
+
+
+@contextmanager
+def profile():
+    start()
+    try:
+        yield
+    finally:
+        stop()
+        display()
 
 
 ###########################################################################
