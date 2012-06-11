@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
-import os
-from setuptools import find_packages, setup
+import os, sys
+from setuptools import setup
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+extra = {}
+if sys.version_info >= (3,):
+    extra['use_2to3'] = True
 
 setup(
     name = "statprof",
@@ -22,4 +26,5 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     ],
+    **extra
 )
