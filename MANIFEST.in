@@ -1,5 +1,1 @@
-LICENSE
-AUTHORS
-README.rst
-setup.py
-statprof.py
+include AUTHORS LICENSE README.rst setup.py statprof.py
