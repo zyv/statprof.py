@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-import sys
 
+import os, sys
 from setuptools import setup
+
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 extra = {}
 if sys.version_info >= (3,):
@@ -13,11 +16,11 @@ setup(
     author="Bryan O'Sullivan",
     author_email="bos@serpentine.com",
     description="Statistical profiling for Python",
-    license="LGPL",
+    license=read('LICENSE'),
     keywords="profiling",
     url="http://packages.python.org/statprof",
     py_modules=['statprof'],
-    long_description=open('README.rst').read(),
+    long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",

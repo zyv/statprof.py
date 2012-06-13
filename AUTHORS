@@ -1,0 +1,11 @@
+statprof was originally written by Andy Wingo, and later ported to modern
+Python by Alex Frazer. It's now maintained by Bryan O'Sullivan.
+
+And here is an list of people who have submitted patches, reported bugs, and
+generally made statprof that much better:
+
+    * Alex Fraser <alex at phatcore dot com>
+    * Andy Wingo <wingo at pobox dot com>
+    * Bryan O'Sullivan <bos@serpentine.com>
+    * Rob Browning <rlb at defaultvalue dot org>
+    * Timothée Peignier <tim at tryphon dot org>
