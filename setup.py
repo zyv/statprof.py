@@ -16,7 +16,7 @@ setup(
     author = "Bryan O'Sullivan",
     author_email = "bos@serpentine.com",
     description = "Statistical profiling for Python",
-    license = "LGPL",
+    license = open('LICENSE').read(),
     keywords = "profiling",
     url = "http://packages.python.org/statprof",
     py_modules = ['statprof'],
