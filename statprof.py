@@ -135,10 +135,10 @@ class ProfileState(object):
         self.sample_count = 0
         # a float
         if frequency:
-            self.sample_interval = 1.0/frequency
+            self.sample_interval = 1.0 / frequency
         elif not hasattr(self, 'sample_interval'):
             # default to 1000 Hz
-            self.sample_interval = 1.0/1000.0
+            self.sample_interval = 1.0 / 1000.0
         else:
             # leave the frequency as it was
             pass
@@ -154,6 +154,7 @@ class ProfileState(object):
         self.accumulated_time += stop_time - self.last_start_time
 
 state = ProfileState()
+
 
 class CodeKey(object):
     cache = {}
@@ -185,6 +186,7 @@ class CodeKey(object):
             v = cls(frame)
             cls.cache[k] = v
             return v
+
 
 class CallData(object):
     all_calls = {}
@@ -223,6 +225,7 @@ def sample_stack_procs(frame):
     for key in keys_seen:
         CallData.get(key).cum_sample_count += 1
 
+
 def profile_signal_handler(signum, frame):
     if state.profile_level > 0:
         state.accumulate_time(clock())
@@ -238,6 +241,7 @@ def profile_signal_handler(signum, frame):
 def is_active():
     return state.profile_level > 0
 
+
 def start():
     '''Install the profiling signal handler, and start profiling.'''
     state.profile_level += 1
@@ -248,7 +252,8 @@ def start():
         signal.signal(signal.SIGPROF, profile_signal_handler)
         signal.setitimer(signal.ITIMER_PROF,
             rpt or state.sample_interval, 0.0)
-        state.gc_time_taken = 0 # dunno
+        state.gc_time_taken = 0  # dunno
+
 
 def stop():
     '''Stop profiling, and uninstall the profiling signal handler.'''
@@ -259,7 +264,8 @@ def stop():
         rpt = signal.setitimer(signal.ITIMER_PROF, 0.0, 0.0)
         signal.signal(signal.SIGPROF, signal.SIG_IGN)
         state.remaining_prof_time = rpt[0]
-        state.gc_time_taken = 0 # dunno
+        state.gc_time_taken = 0  # dunno
+
 
 def reset(frequency=None):
     '''Clear out the state of the profiler.  Do not call while the
@@ -336,4 +342,3 @@ def display(fp=None):
     print >> fp, ('---')
     print >> fp, ('Sample count: %d' % state.sample_count)
     print >> fp, ('Total time: %f seconds' % state.accumulated_time)
-
