@@ -12,7 +12,7 @@ if sys.version_info >= (3,):
 
 setup(
     name="statprof",
-    version="0.1.2",
+    version="0.1.3",
     author="Bryan O'Sullivan",
     author_email="bos@serpentine.com",
     description="Statistical profiling for Python",
