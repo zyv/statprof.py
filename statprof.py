@@ -105,6 +105,7 @@ from __future__ import division
 import os
 import signal
 
+from collections import defaultdict
 from contextlib import contextmanager
 
 
@@ -300,8 +301,11 @@ class CallStats(object):
         secs_per_sample = state.accumulated_time / nsamples
         basename = os.path.basename(call_data.key.filename)
 
-        self.name = '%s:%d:%s' % (basename, call_data.key.lineno,
-                                  call_data.key.name)
+        self.lineno = call_data.key.lineno
+        self.filepath = call_data.key.filename
+        self.filename = basename
+        self.function = call_data.key.name
+        self.name = '%s:%d:%s' % (self.filename, self.lineno, self.function)
         self.pcnt_time_in_proc = self_samples / nsamples * 100
         self.cum_secs_in_proc = cum_samples * secs_per_sample
         self.self_secs_in_proc = self_samples * secs_per_sample
@@ -316,7 +320,12 @@ class CallStats(object):
                                                  self.name))
 
 
-def display(fp=None):
+class DisplayFormats:
+    ByLine = 0
+    ByMethod = 1
+
+
+def display(fp=None, format=0):
     '''Print statistics, either to stdout or the given file object.'''
 
     if fp is None:
@@ -326,10 +335,23 @@ def display(fp=None):
         print >> fp, ('No samples recorded.')
         return
 
+    if format == DisplayFormats.ByLine:
+        display_by_line(fp)
+    elif format == DisplayFormats.ByMethod:
+        display_by_method(fp)
+    else:
+        raise Exception("Invalid display format")
+
+    print >> fp, ('---')
+    print >> fp, ('Sample count: %d' % state.sample_count)
+    print >> fp, ('Total time: %f seconds' % state.accumulated_time)
+
+
+def display_by_line(fp):
+    '''Print the profiler data with each sample line represented
+    as one row in a table.  Sorted by self-time per line.'''
     l = [CallStats(x) for x in CallData.all_calls.itervalues()]
     l.sort(reverse=True, key=lambda x: x.self_secs_in_proc)
-    l = [(x.self_secs_in_proc, x.cum_secs_in_proc, x) for x in l]
-    l = [x[2] for x in l]
 
     print >> fp, ('%5.5s %10.10s   %7.7s  %-8.8s' %
                   ('%  ', 'cumulative', 'self', ''))
@@ -339,6 +361,71 @@ def display(fp=None):
     for x in l:
         x.display(fp)
 
-    print >> fp, ('---')
-    print >> fp, ('Sample count: %d' % state.sample_count)
-    print >> fp, ('Total time: %f seconds' % state.accumulated_time)
+def get_line_source(filename, lineno):
+    '''Gets the line text for the line in the file.'''
+    lineno -= 1
+    fp = None
+    try:
+        fp = open(filename)
+        for i, line in enumerate(fp):
+            if i == lineno:
+                return line
+    except Exception:
+        pass
+    finally:
+        if fp:
+            fp.close()
+
+    return ""
+
+def display_by_method(fp):
+    '''Print the profiler data with each sample function represented
+    as one row in a table.  Important lines within that function are
+    output as nested rows.  Sorted by self-time per line.'''
+    print >> fp, ('%5.5s %10.10s   %7.7s  %-8.8s' %
+                  ('%  ', 'cumulative', 'self', ''))
+    print >> fp, ('%5.5s  %9.9s  %8.8s  %-8.8s' %
+                  ("time", "seconds", "seconds", "name"))
+
+    calldata = [CallStats(x) for x in CallData.all_calls.itervalues()]
+
+    grouped = defaultdict(list)
+    for call in calldata:
+        grouped[call.filename + ":" + call.function].append(call)
+
+    # compute sums for each function
+    functiondata = []
+    for fname, samples in grouped.iteritems():
+        total_cum_sec = 0
+        total_self_sec = 0
+        total_percent = 0
+        for sample in samples:
+            total_cum_sec += sample.cum_secs_in_proc
+            total_self_sec += sample.self_secs_in_proc
+            total_percent += sample.pcnt_time_in_proc
+        functiondata.append((fname, 
+                             total_cum_sec, 
+                             total_self_sec,
+                             total_percent,
+                             samples))
+
+    # sort by total self sec
+    functiondata.sort(reverse=True, key=lambda x: x[2])
+
+    for function in functiondata:
+        print >> fp, ('%6.2f %9.2f %9.2f  %s' % (function[3], # total percent
+                                                 function[1], # total cum sec
+                                                 function[2], # total self sec
+                                                 function[0])) # file:function
+        function[4].sort(reverse=True, key=lambda i: i.self_secs_in_proc)
+        for call in function[4]:
+            # only show line numbers for significant locations ( > 1% time spent)
+            if call.pcnt_time_in_proc > 1:
+                source = get_line_source(call.filepath, call.lineno).strip()
+                if len(source) > 25:
+                    source = source[:20] + "..."
+
+                print >> fp, ('%33.0f%% %6.2f   line %s: %s' % (call.pcnt_time_in_proc, 
+                                                                call.self_secs_in_proc,
+                                                                call.lineno,
+                                                                source))
