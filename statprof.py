@@ -349,7 +349,7 @@ def display(fp=None, format=0):
 def display_by_line(fp):
     '''Print the profiler data with each sample line represented
     as one row in a table.  Sorted by self-time per line.'''
-    l = [CallStats(x) for x in CallData.all_calls.itervalues()]
+    l = [CallStats(x) for x in CallData.all_calls.values()]
     l.sort(reverse=True, key=lambda x: x.self_secs_in_proc)
 
     fp.write('%5.5s %10.10s   %7.7s  %-8.8s' %
@@ -386,7 +386,7 @@ def display_by_method(fp):
     fp.write('%5.5s  %9.9s  %8.8s  %-8.8s' %
                   ("time", "seconds", "seconds", "name"))
 
-    calldata = [CallStats(x) for x in CallData.all_calls.itervalues()]
+    calldata = [CallStats(x) for x in CallData.all_calls.values()]
 
     grouped = defaultdict(list)
     for call in calldata:
@@ -394,7 +394,7 @@ def display_by_method(fp):
 
     # compute sums for each function
     functiondata = []
-    for fname, samples in grouped.iteritems():
+    for fname, samples in grouped.items():
         total_cum_sec = 0
         total_self_sec = 0
         total_percent = 0
