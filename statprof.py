@@ -100,7 +100,6 @@ reporting function uses per-process timers, the results can be
 significantly off if other threads' work patterns are not similar to the
 main thread's work patterns.
 """
-from __future__ import division
 
 import os
 import signal
@@ -306,7 +305,7 @@ class CallStats(object):
         self.filename = basename
         self.function = call_data.key.name
         self.name = '%s:%d:%s' % (self.filename, self.lineno, self.function)
-        self.pcnt_time_in_proc = self_samples / nsamples * 100
+        self.pcnt_time_in_proc = 100.0 * self_samples / nsamples
         self.cum_secs_in_proc = cum_samples * secs_per_sample
         self.self_secs_in_proc = self_samples * secs_per_sample
         self.num_calls = None
